@@ -5,36 +5,44 @@ const router = express.Router();
 const db = require("./data/db");
 
 //get
-router.route("/").get(async (req, res) => {
-    try {
-        const allPosts = await db.find();
-        res.status(200).json(allPosts);
-    } catch (err) {
-        res.status(400).json(err);
-    }
+router.get("/", (req, res) => {
+    db
+        .find()
+        .then(post => {
+            res.status(200).json(post);
+        })
+        .catch(err => {
+            console.log(err);
+            res.status(500).json({
+                error: "The posts information could not be retrieved"
+            });
+        });
 });
 
 // get comments
-router
-    .get("/:id/comments", (req, res) => {
-        db.findPostComments(req.params.id)
-            .then((item) => {
-                if (item) {
-                    res.status(200).json(item);
-                } else {
-                    res.status(404).json({
-                        errorMessage: "404 comment not found"
-                    });
-                }
-            })
-            .catch((err) => {
-                console.log(err);
-                res.status(500).json({
-                    errorMessage: "500 server is confused"
+router.get("/:id/comments", (req, res) => {
+    const postId = req.params.id;
+    db
+        .findPostComments(postId)
+        .then(comments => {
+            if (postId) {
+                res.status(200).json(comments);
+            } else {
+                res.status(404).json({
+                    errorMessage: "404 the post does not exist.",
                 });
+            }
+        })
+        .catch((err) => {
+            console.log(err);
+            res.status(500).json({
+                errorMessage: "500 the comment could not be pulled",
             });
-    })
-    //posting
+        });
+})
+
+//posting
+router
     .post("/", (req, res) => {
         !req.body.title || !req.body.contents
             ? res.status(400).json("400 this request is bad")
@@ -99,13 +107,13 @@ router.put("/:id", (req, res) => {
     }
 });
 
-//post comment
+// post comment
 router.post("/:id/comments", (req, res) => {
     const comments = req.body;
     if (!comments.text) {
         res
             .status(400)
-            .json({ errorMessage: " Please add text for your comment" });
+            .json({ errorMessage: "Please provide text for the comments." });
     } else {
         db.insertComment(comments)
             .then((item) => {
@@ -113,15 +121,13 @@ router.post("/:id/comments", (req, res) => {
                     res.status(201).json(item);
                 } else {
                     res.status(404).json({
-                        errorMessage: "404 this comment does not exist"
+                        errorMessage: "The post with the specified ID does not exist.",
                     });
                 }
             })
             .catch((err) => {
                 console.log(err);
-                res.status(500).json({
-                    errorMessage: "500 server error"
-                });
+                res.status(500).json({ errorMessage: "500 - server error" });
             });
     }
 });
