@@ -1,13 +1,15 @@
 const express = require("express");
-const server = express();
 const postsRouter = require("./router");
+const server = express();
 
-
+const PORT = process.env.PORT || 8000;
 server.get("/", (req, res) => {
-    res.json({ api: "Project api is up" });
+    res.json({ api: "Project API is up and Running!" });
 });
 
 server.use(express.json());
 server.use("/api/posts", postsRouter);
 
-server.listen(8000, () => console.log("server is up on 8k"));
+server.listen(PORT, () => {
+    console.log(`server running on ${PORT}`);
+});
